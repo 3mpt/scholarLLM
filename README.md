@@ -1,4 +1,2 @@
-# scholarLLM
+# 基于书生大模型的知识图谱问答项目
 
-https://github.com/InternLM/Tutorial
-书生大模型学习
