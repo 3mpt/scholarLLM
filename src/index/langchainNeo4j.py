@@ -9,7 +9,7 @@ import os
 # os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["NEO4J_URI"] = "bolt://localhost:7687"
 os.environ["NEO4J_USERNAME"] = "neo4j"
-os.environ["NEO4J_PASSWORD"] = "my_"
+os.environ["NEO4J_PASSWORD"] = "123qwezxc"
 
 api_base_url =  "https://internlm-chat.intern-ai.org.cn/puyu/api/v1/"
 model = "internlm2.5-latest"
@@ -517,7 +517,7 @@ langgraph = langgraph.compile()
 
 # View
 # display(Image(langgraph.get_graph().draw_mermaid_png()))
-langgraph.invoke({"question": "测井人员不得干什么?"})
+langgraph.invoke({"question": "煤矿测井人员不得干什么?"})
 # chain = GraphCypherQAChain.from_llm(
 #     graph=enhanced_graph, llm=llm, verbose=True, allow_dangerous_requests=True
 # )

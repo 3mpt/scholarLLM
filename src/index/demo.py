@@ -5,8 +5,8 @@ os.environ["NEO4J_URI"] = "bolt://localhost:7687"
 os.environ["NEO4J_USERNAME"] = "neo4j"
 os.environ["NEO4J_PASSWORD"] = "123qwezxc"
 
-api_base_url =  "https://internlm-chat.intern-ai.org.cn/puyu/api/v1/"
-model = "internlm2.5-latest"
+api_base_url =  "http://127.0.0.1:8000/v1/"
+model = "models/internlm2_5-7b-chat"
 api_key = "my_key"
 from langchain_neo4j import Neo4jGraph
 from langchain_neo4j import GraphCypherQAChain
@@ -18,7 +18,6 @@ llm = ChatOpenAI(
     temperature=0,           # 设置温度等其他参数
     openai_api_base=api_base_url,  # 传递 api_base_url
     openai_api_key=api_key,  # 传递 api_key
-    tool_choice="auto"
 )
 # chain = GraphCypherQAChain.from_llm(
 #     graph=enhanced_graph, llm=llm, verbose=True, allow_dangerous_requests=True
@@ -35,8 +34,6 @@ guardrails_system = f"""
 或相关主题。仅提供指定的输出："coal" 或 "end"。
 用户提问：
 {{question}}
-
-
 """
 
 
