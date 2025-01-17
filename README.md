@@ -33,6 +33,16 @@ python -m vllm.entrypoints.openai.api_server \
     --tool-call-parser internlm \
     --chat-template examples/tool_chat_template_internlm2_tool.jinja
 
+    
+python -m vllm.entrypoints.openai.api_server \
+    --model model/internlm2_5-20b-chat \
+    --trust-remote-code \
+    --enable-auto-tool-choice \
+    --tool-call-parser internlm \
+    --chat-template examples/tool_chat_template_internlm2_tool.jinja
+
+    
+
 ## 💕 致谢
 
 ### 项目成员
