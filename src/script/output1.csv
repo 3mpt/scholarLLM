@@ -1,0 +1,6 @@
+五元组信息,问题,生成的语句,查询结果
+"{'start': '煤层气地面开采项目', 'type': '应当', 'labels(a)': ['安全管理'], 'labels(b)': ['法律法规']}",Error generating question,Error generating Cypher,False
+"{'start': '安全设施', 'type': '属于', 'labels(a)': ['设备与工具'], 'labels(b)': ['活动与作业']}",Error generating question,Error generating Cypher,False
+"{'start': '安全设施', 'type': '必须', 'labels(a)': ['设备与工具'], 'labels(b)': ['活动与作业']}",Error generating question,Error generating Cypher,False
+"{'start': '安全设施投资', 'type': '应当', 'labels(a)': ['活动与作业'], 'labels(b)': ['活动与作业']}",Error generating question,Error generating Cypher,False
+"{'start': '煤层气井钻井、压裂、排采、修井等施工方案', 'type': '由', 'labels(a)': ['安全管理'], 'labels(b)': ['组织与人员']}",Error generating question,Error generating Cypher,False

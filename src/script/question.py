@@ -53,28 +53,51 @@ generate_chain = generate_prompt | llm.with_structured_output(GenerateOutput)
 # 获取所有数据
 query = """
 MATCH (a)-[r]->(b)
-RETURN a.name as start, type(r) as type , labels(a),labels(b) LIMIT 100
+RETURN a.name as start, type(r) as type , labels(a),labels(b) LIMIT 1000
 """  # 查询图谱中所有节点
 result = enhanced_graph.query(query)
-# 打印结果
-for record in result:
-    try:
-        output = generate_chain.invoke({"schema": record})  # 生成 Cypher 查询语句
-        
-        # 执行查询并捕获结果
-        query_result = enhanced_graph.query(output.cypher)
-        
-        # 如果查询结果为 false 或空，则设为 False
-        if query_result is None or query_result == False:
-            query_result = False
-        
-        print(record, '\n', output.cypher, query_result)
-    
-    except Exception as e:
-        # 如果捕获到异常，打印错误信息，并设置 query_result 为 False
-        print(f"Error processing record {record}: {e}")
-        query_result = False
-        
-        # 打印输出错误信息
-        print(record, '\n', "Cypher query failed", query_result)
+# 保存数据到列表中
+data = []
+import csv
 
+# 打开文件并以追加模式写入
+with open("output1.csv", mode="a", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+
+    # 如果是第一次写入，添加表头
+    if file.tell() == 0:  # 如果文件为空
+        writer.writerow(["五元组信息", "问题", "生成的语句", "查询结果"])
+
+    # 打印并追加结果
+    for record in result:
+        try:
+            output = generate_chain.invoke({"schema": record})  # 生成 Cypher 查询语句
+
+            # 执行查询并捕获结果
+            query_result = enhanced_graph.query(output.cypher)
+
+            # 如果查询结果为 false 或空，则设为 False
+            if query_result is None or query_result == False:
+                query_result = False
+
+            # 打印并写入文件
+            writer.writerow([record, output.question, output.cypher, query_result])
+            print(record, "\n", output.cypher, query_result)
+
+        except Exception as e:
+            # 如果捕获到异常，打印错误信息，并设置 query_result 为 False
+            print(f"Error processing record {record}: {e}")
+            query_result = False
+
+            # 写入错误信息
+            writer.writerow(
+                [
+                    record,
+                    "Error generating question",
+                    "Error generating Cypher",
+                    query_result,
+                ]
+            )
+
+            # 打印输出错误信息
+            print(record, "\n", "Cypher query failed", query_result)
