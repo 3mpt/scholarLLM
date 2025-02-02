@@ -81,7 +81,7 @@ if __name__ == "__main__":
     )
 
     # 加载数据
-    dataset = TripleDataset("./data/train_converted.json", tokenizer)
+    dataset = TripleDataset("./data/NLPCC/train_converted.json", tokenizer)
     dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
     # 加载模型并确保其在正确的设备上
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     train(model, dataloader, optimizer, device, epochs=10)
 
     # 保存模型
-    torch.save(model.state_dict(), "Randeng_t5_02_02_19_01.pth")
+    torch.save(model.state_dict(), "Randeng_NLPCC_02_02_22_34.pth")
