@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+*.pth
 build/
 develop-eggs/
 dist/
@@ -136,7 +137,7 @@ venv.bak/
 
 # Rope project settings
 .ropeproject
-.work_dirs
+work_dirs/
 # mkdocs documentation
 /site
 

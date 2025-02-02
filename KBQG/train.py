@@ -75,18 +75,18 @@ def train(model, dataloader, optimizer, device, epochs=5):
 # 主函数
 if __name__ == "__main__":
     # 初始化分词器并设置 legacy=False
-    tokenizer = AutoTokenizer.from_pretrained("t5-base", legacy=False)
-    # tokenizer = AutoTokenizer.from_pretrained(
-    #     "IDEA-CCNL/Randeng-T5-784M-MultiTask-Chinese", legacy=False
-    # )
+    # tokenizer = AutoTokenizer.from_pretrained("t5-base", legacy=False)
+    tokenizer = AutoTokenizer.from_pretrained(
+        "IDEA-CCNL/Randeng-T5-784M-MultiTask-Chinese", legacy=False
+    )
 
     # 加载数据
-    dataset = TripleDataset("./data/train_mini.json", tokenizer)
+    dataset = TripleDataset("./data/train_converted.json", tokenizer)
     dataloader = DataLoader(dataset, batch_size=8, shuffle=True)
     # 加载模型并确保其在正确的设备上
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = Triple2QuestionModel().to(device)
-    # model = RandengT5().to(device)
+    # model = Triple2QuestionModel().to(device)
+    model = RandengT5().to(device)
 
     # 定义优化器
     optimizer = AdamW(model.parameters(), lr=1e-5)
@@ -95,4 +95,4 @@ if __name__ == "__main__":
     train(model, dataloader, optimizer, device, epochs=10)
 
     # 保存模型
-    torch.save(model.state_dict(), "Randeng_t5.pth")
+    torch.save(model.state_dict(), "Randeng_t5_02_02_19_01.pth")

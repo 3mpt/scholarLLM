@@ -39,7 +39,7 @@ class RandengT5(nn.Module):
             generated_text = self.tokenizer.decode(
                 output_ids[0], skip_special_tokens=True
             )
-            print("生成的问题为：", generated_text)
+            print("生成的问题为：", generated_text, output_ids)
             return generated_text
         except Exception as e:
             print(f"生成过程中发生错误: {e}")

@@ -1,4 +1,5 @@
 from model.triple2question import Triple2QuestionModel
+from model.randeng_T5 import RandengT5
 import torch
 
 # 指定设备（CPU 或 GPU）
@@ -6,14 +7,20 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 try:
     # 加载模型
-    model = Triple2QuestionModel(device=device)
-    model.load_state_dict(torch.load("Randeng_t5.pth", map_location=device))
+    # model = Triple2QuestionModel(device=device)
+    model = RandengT5(device=device)
+    model.load_state_dict(torch.load("Randeng_t5_02_02_17_24.pth", map_location=device))
     model.eval()
 
     # 评估数据
+    # 一条佰 ||| 爷爷 ||| 一条一怔
     eval_data = [
-        'generate question: [["Sapporo", "City Bird", "Cuckoo"]]',
-        'generate question: [["Junior College Student", "Duration of Study", "Three Years"]]',
+       "generate question: [['一条佰', '爷爷', '一条一怔']]",
+       "generate question: [['巴淡市', '陆地面积', '1040平方公里']]",
+       "generate question: [['火葫芦', '冷却时间', '15s']]",
+       "generate question: [['教育方法', '实现', '教育目的，完成教育任务']]",
+       "generate question: [['古窑', '展馆名称', '景德镇古窑民俗博览区']]",
+
     ]
 
     # 生成问题
