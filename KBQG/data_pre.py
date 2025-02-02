@@ -24,8 +24,8 @@ def convert_format(input_data):
 
 def main():
     # 加载原始数据
-    input_file = "data/train.json"  # 原始数据路径
-    output_file = "data/train_converted.json"  # 转换后数据路径
+    input_file = "data/test.json"  # 原始数据路径
+    output_file = "data/test_converted.json"  # 转换后数据路径
 
     with open(input_file, "r", encoding="utf-8") as f:
         input_data = json.load(f)
