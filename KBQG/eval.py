@@ -4,6 +4,8 @@ import torch
 # 加载测试数据
 import json
 from utils import calculate_metrics
+import jieba
+
 with open("./data/test_converted.json", "r", encoding="utf-8") as f:
     test_data = json.load(f)
 # 指定设备（CPU 或 GPU）
@@ -20,8 +22,9 @@ try:
     total_bleu = 0
     total_meteor = 0
     total_rouge_l = 0
+    # 存储评估结果
+    evaluation_results = []
     # 评估数据
-    # 一条佰 ||| 爷爷 ||| 一条一怔
     for entry in test_data:
         # 构建输入文本
         subject, predicate, obj = entry["path"][0]
@@ -32,7 +35,12 @@ try:
         question = model.generate(input_text)
         if question:
             print("生成的问题:", question)
-            bleu, meteor, rouge_l = calculate_metrics(reference_question, question)
+            # 分词
+            reference_tokens = list(jieba.cut(reference_question))
+            generated_tokens = list(jieba.cut(question))
+            bleu, meteor, rouge_l = calculate_metrics(
+                reference_tokens, generated_tokens
+            )
             total_bleu += bleu
             total_meteor += meteor
             total_rouge_l += rouge_l
