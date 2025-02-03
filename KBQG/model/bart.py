@@ -4,10 +4,10 @@ import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
-class RandengT5(nn.Module):
+class Bart(nn.Module):
 
     def __init__(self, model_name="fnlp/bart-base-chinese", device=None):
-        super(RandengT5, self).__init__()
+        super(Bart, self).__init__()
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, legacy=False)
 

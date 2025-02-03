@@ -5,6 +5,7 @@ from transformers import AdamW, T5Tokenizer, AutoTokenizer, AutoModelForSeq2SeqL
 from tqdm import tqdm
 from model.triple2question import Triple2QuestionModel
 from model.randeng_T5 import RandengT5
+from model.bart import Bart
 import os
 
 os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
@@ -84,8 +85,8 @@ if __name__ == "__main__":
     # 加载模型并确保其在正确的设备上
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = Triple2QuestionModel().to(device)
-    model = RandengT5().to(device)
-
+    # model = RandengT5().to(device)
+    model = Bart().to(device)
     # 定义优化器
     optimizer = AdamW(model.parameters(), lr=1e-5)
 
@@ -93,4 +94,4 @@ if __name__ == "__main__":
     train(model, dataloader, optimizer, device, epochs=10)
 
     # 保存模型
-    torch.save(model.state_dict(), "bart_NLPCC_02_02_22_34.pth")
+    torch.save(model.state_dict(), "bart_NLPCC_02_03_14_54.pth")

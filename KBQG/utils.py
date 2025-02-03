@@ -1,6 +1,6 @@
 from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.meteor_score import meteor_score
-from rouge_score import rouge_scorer
+from rouge import Rouge
 
 
 def calculate_metrics(reference, candidate):
@@ -13,8 +13,8 @@ def calculate_metrics(reference, candidate):
     # METEOR
     meteor = meteor_score([reference], candidate)
 
-    # ROUGE-L
-    scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-    rouge_l = scorer.score(" ".join(reference), " ".join(candidate))["rougeL"].fmeasure
+    rouge = Rouge()
 
+    # 计算 ROUGE-L 分数
+    rouge_l = rouge.calc_score([" ".join(reference)], [" ".join(candidate)])  
     return bleu, meteor, rouge_l

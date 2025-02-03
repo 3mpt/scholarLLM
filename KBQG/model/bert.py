@@ -4,7 +4,7 @@ import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
-class RandengT5(nn.Module):
+class Bert(nn.Module):
     def __init__(
         self, model_name="bert-base-chinese", device=None
     ):
