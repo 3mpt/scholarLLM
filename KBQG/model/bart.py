@@ -30,7 +30,6 @@ class Bart(nn.Module):
 
     def generate(self, input_text, max_length=100):
         try:
-            print(f"输入文本: {input_text}")
             input_ids = self.tokenizer.encode(input_text, return_tensors="pt").to(
                 self.device
             )
@@ -38,7 +37,6 @@ class Bart(nn.Module):
             generated_text = self.tokenizer.decode(
                 output_ids[0], skip_special_tokens=True
             )
-            print("生成的问题为：", generated_text, output_ids)
             return generated_text
         except Exception as e:
             print(f"生成过程中发生错误: {e}")

@@ -153,20 +153,20 @@ def main():
     parser.add_argument(
         "--test_data",
         type=str,
-        default="./data/NLPCC/test_converted.json",
+        default="./data/KGCLUE/test_converted.json",
         help="测试数据文件路径",
     )
     parser.add_argument(
         "--model_path",
         type=str,
-        default="output/bart_NLPCC_02_03_14_54.pth",
+        default="output/bart_02_03_18_14.pth",
         help="模型文件路径",
     )
     parser.add_argument(
-        "--output_file", type=str, default="output/evaluation_results_new_rouge.csv", help="输出文件路径"
+        "--output_file", type=str, default="output/eval/bart_02_03_18_14.csv", help="输出文件路径"
     )
     parser.add_argument(
-        "--model_name", type=str, default="bart_NLPCC_02_03_14_54", help="模型名字"
+        "--model_name", type=str, default="bart_02_03_18_14", help="模型名字"
     )
     parser.add_argument("--append", action="store_true", help="是否追加结果到现有文件")
     args = parser.parse_args()

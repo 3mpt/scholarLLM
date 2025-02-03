@@ -93,7 +93,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
             best_val_loss = val_loss
             best_epoch = epoch + 1
             current_time = datetime.now().strftime("%m_%d_%H_%M")
-            model_save_path = f"/output/bart_NLPCC_{current_time}.pth"
+            model_save_path = f"output/bart_{current_time}.pth"
             torch.save(model.state_dict(), model_save_path)
             print(f"Best model saved at epoch {epoch + 1} with Val Loss: {val_loss}")
 
@@ -107,8 +107,8 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("fnlp/bart-base-chinese", legacy=False)
 
     # 加载数据
-    train_dataset = TripleDataset("./data/NLPCC/train_converted.json", tokenizer)
-    val_dataset = TripleDataset("./data/NLPCC/val_converted.json", tokenizer)
+    train_dataset = TripleDataset("./data/KGCLUE/train_converted.json", tokenizer)
+    val_dataset = TripleDataset("./data/KGCLUE/val_converted.json", tokenizer)
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 
@@ -117,7 +117,8 @@ if __name__ == "__main__":
     # model = Triple2QuestionModel().to(device)
     # model = RandengT5().to(device)
     model = Bart().to(device)
-
+    # 加载最佳模型
+    model.load_state_dict(torch.load("output/bart_NLPCC_02_03_17_15.pth"))
     # 定义优化器
     optimizer = AdamW(model.parameters(), lr=1e-5)
 
