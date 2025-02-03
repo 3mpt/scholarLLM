@@ -76,9 +76,7 @@ def train(model, dataloader, optimizer, device, epochs=5):
 if __name__ == "__main__":
     # 初始化分词器并设置 legacy=False
     # tokenizer = AutoTokenizer.from_pretrained("t5-base", legacy=False)
-    tokenizer = AutoTokenizer.from_pretrained(
-        "IDEA-CCNL/Randeng-T5-784M-MultiTask-Chinese", legacy=False
-    )
+    tokenizer = AutoTokenizer.from_pretrained("fnlp/bart-base-chinese", legacy=False)
 
     # 加载数据
     dataset = TripleDataset("./data/NLPCC/train_converted.json", tokenizer)
@@ -95,4 +93,4 @@ if __name__ == "__main__":
     train(model, dataloader, optimizer, device, epochs=10)
 
     # 保存模型
-    torch.save(model.state_dict(), "Randeng_NLPCC_02_02_22_34.pth")
+    torch.save(model.state_dict(), "bart_NLPCC_02_02_22_34.pth")
