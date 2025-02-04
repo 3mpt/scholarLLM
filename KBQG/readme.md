@@ -21,3 +21,4 @@ randeng_T5
 TODO:
 
 后续要把这一块融入LLM结合
+使用大语言模型0-shot 进行KBQG任务
