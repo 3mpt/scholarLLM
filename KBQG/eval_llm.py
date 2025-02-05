@@ -32,12 +32,14 @@ llm = ChatOpenAI(
 
 # 生成问题系统的提示模板
 generate_system = """
-你将接收到一个或多个三元组结构的数据，其中包括三部分：主体、关系、客体。
+你将接收到一个或多个三元组结构的数据，每个其中包括三部分：主体、关系、客体。
 请根据以下三元组生成一个相关的问题语句。
 要求：
 1. 生成的问题尽可能简短
 2. 要基于给定的知识
+3. 客体为问题的答案，由主体和关系生成出问题
 例如: {{'schema':[['宣肺化痰', '治疗', '外感风寒，痰涎壅肺']],'question':'我想知道宣肺化痰可以治疗什么'}}
+    {{'schema': [["顾菁菁","登场作品","一仆二主"], [ "一仆二主", "出品公司","新丽传媒股份有限公司"]],"question":"请问顾菁菁的登场作品是哪个公司出品的？"}}
 这是数据
 {schema}
 """
@@ -49,7 +51,7 @@ generate_prompt = ChatPromptTemplate(
 )
 
 # 生成问题的输出模型
-class GenerateOutput(BaseModel):
+class GenerateOutput(BaseModel): 
     question: str = Field(..., description="基于给定的三元组生成问题")
 
 # 生成问题的链
@@ -169,14 +171,14 @@ def save_results(
 
 def main():
     # 加载数据
-    data_path = "./data/KGCLUE/test_converted_test.json"
+    data_path = "./data/NLPCC/test_converted.json"
     test_data = load_data(data_path)
     # 保存结果
-    output_path = "output/eval/internlm2_5_keglue.csv"
+    output_path = "output/eval/internlm2_5_nlpcc.csv"
 
     avg_bleu, avg_meteor, avg_rouge_l, evaluation_results = evaluate(
-            generate_chain, test_data
-        )
+        generate_chain, test_data
+    )
     # 保存评估结果
     save_results(
         output_path,
