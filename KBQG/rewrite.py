@@ -1,24 +1,18 @@
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-import csv
-import logging
-import torch
+from pydantic import BaseModel, Field
 import json
-from utils import calculate_metrics
-import jieba
-from tqdm import tqdm
-import csv
-import logging
-import argparse
 import os
-import re
+import logging
+import pandas as pd
 # 设置日志记录
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 # 设置代理
 os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
 os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+
 # API 配置
 api_base_url = "http://127.0.0.1:8000/v1/"
 model = "models/internlm2_5-7b-chat"
@@ -26,29 +20,43 @@ api_key = "my_key"
 
 # 初始化语言模型
 llm = ChatOpenAI(
-    model_name=model,  # 使用你的模型
-    temperature=0,  # 设置温度等其他参数
-    openai_api_base=api_base_url,  # 传递 api_base_url
-    openai_api_key=api_key,  # 传递 api_key
+    model_name=model,
+    temperature=0,
+    openai_api_base=api_base_url,
+    openai_api_key=api_key,
 )
 
 # 生成问题系统的提示模板
 generate_system = """
-你将接收到一个三元组和由其生成的问题，请根据示例进行改写
-要求：
-1. 改写后的问题尽可能满足示例的风格
-2. 改写后的问题要流畅
-3. 客体为问题的答案，由主体和关系生成出问题
-例如: {{'schema':[['你好台湾网', '办公地点', '央广新媒体大厦']]",'question':'你好台湾网在哪里办公'，'rewrite':',请问你好台湾网在哪里办公'}}
-    {{'schema': [['丰县', '县委书记', '娄海']],'question':'丰县的县委书记是谁'，'rewrite':',你知道丰县的县委书记是谁吗'}}
-这是数据
+给定一个三元组数据 schema 和由其生成的问题 question，请生成一个流畅且自然的改写问题。具体要求如下：
+
+改写后的问题应该尽量模仿示例风格，保留原问题的核心信息和意思。
+保证问题的语气自然、流畅，并且符合日常口语表达。
+生成的问题应该把客体作为问题的答案，且由主体和关系生成问题。
+不需要完全重复原问题，但要保证意思一致，并尽量使问题更具问询性质。
+根据上下文，适当变换提问方式，比如使用“你知道”、“请问”等引导词。
+示例:
+
+输入:
+
+schema: [['你好台湾网', '办公地点', '央广新媒体大厦']]
+question: 你好台湾网在哪里办公
+输出: 请问你好台湾网在哪里办公？
+
+输入:
+
+schema: [['丰县', '县委书记', '娄海']]
+question: 丰县的县委书记是谁
+输出: 你知道丰县的县委书记是谁吗？
+
+任务： 根据给定的 schema 和 question，生成相应的改写问题。
 {schema},{question}
 """
 
 # 生成问题的提示模板
 generate_prompt = ChatPromptTemplate(
     messages=[HumanMessagePromptTemplate.from_template(generate_system)],
-    input_variables=["schema","question"],
+    input_variables=["schema", "question"],
 )
 
 # 生成问题的输出模型
@@ -58,151 +66,39 @@ class GenerateOutput(BaseModel):
 # 生成问题的链
 generate_chain = generate_prompt | llm.with_structured_output(GenerateOutput)
 
-def load_data(file_path):
+def generate_questions(test_data):
     """
-    加载测试数据。
+    根据数据生成问题。
     """
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    generated_questions = []
+    input_texts = test_data["输入文本"].tolist()
+    questions = test_data["生成问题"].tolist()
+    # 为了将结果添加为新列
+    rewritten_questions = []
 
-def clean_text(text):
-    """
-    去除文本中的标点符号。
-    """
-    # 使用正则表达式去除标点符号
-    cleaned_text = re.sub(r'[^\w\s]', '', text).replace(" ", "")
-    return cleaned_text
+    for input_text, question in zip(input_texts, questions):
+        print(input_text, question)
+        input_text = input_text.replace("generate question: ", "")  # 移除 "generate question: "
+        rewrite = generate_chain.invoke({"schema": input_text, "question": question}).rewrite
+        rewritten_questions.append(rewrite)
+    # 将改写问题添加为 DataFrame 新的一列
+    test_data["改写问题"] = rewritten_questions
+    return test_data
 
-def evaluate(model, test_data):
-    """
-    评估模型。
-    """
-    total_bleu = 0
-    total_meteor = 0
-    total_rouge_l = 0
-    evaluation_results = []
-
-    for entry in tqdm(test_data, desc="评估进度"):
-        # 构建输入文本
-        input_text = entry["path"]
-        reference_question = entry["q"]
-        logger.info(f"评估输入文本: {input_text}")
-        question = model.invoke({"schema": input_text}).question
-        if question:
-            logger.info(f"生成的问题: {question}")
-            # 去除标点符号
-            reference_question_cleaned = clean_text(reference_question)
-            question_cleaned = clean_text(question)
-            # 分词
-            reference_tokens = list(jieba.cut(reference_question_cleaned))
-            generated_tokens = list(jieba.cut(question_cleaned))
-            bleu, meteor, rouge_l = calculate_metrics(
-                reference_tokens, generated_tokens
-            )
-            total_bleu += bleu
-            total_meteor += meteor
-            total_rouge_l += rouge_l
-
-            # 存储评估结果
-            evaluation_results.append(
-                {
-                    "input_text": input_text,
-                    "generated_question": question_cleaned,
-                    "reference_question": reference_question_cleaned,
-                    "bleu": bleu,
-                    "meteor": meteor,
-                    "rouge_l": rouge_l,
-                }
-            )
-        else:
-            logger.warning("生成失败。")
-
-    # 计算平均分数
-    num_samples = len(test_data)
-    avg_bleu = total_bleu / num_samples
-    avg_meteor = total_meteor / num_samples
-    avg_rouge_l = total_rouge_l / num_samples
-
-    logger.info(f"平均 BLEU 分数: {avg_bleu}")
-    logger.info(f"平均 METEOR 分数: {avg_meteor}")
-    logger.info(f"平均 ROUGE-L 分数: {avg_rouge_l}")
-
-    return avg_bleu, avg_meteor, avg_rouge_l, evaluation_results
-
-def save_results(
-    output_file,
-    model_name,
-    avg_bleu,
-    avg_meteor,
-    avg_rouge_l,
-    evaluation_results,
-    append=False,
-):
-    """
-    保存评估结果到 CSV 文件。
-    """
-    mode = "a" if append else "w"
-    with open(output_file, mode, encoding="utf-8", newline="") as f:
-        writer = csv.writer(f)
-        if not append:
-            # 写入表头
-            writer.writerow(
-                ["模型名字", "平均 BLEU 分数", "平均 METEOR 分数", "平均 ROUGE-L 分数"]
-            )
-        # 写入评估结果
-        writer.writerow([model_name, avg_bleu, avg_meteor, avg_rouge_l])
-
-        # 写入每个样本的详细评估结果
-        writer.writerow(
-            ["", "输入文本", "生成问题", "参考问题", "BLEU", "METEOR", "ROUGE-L"]
-        )
-        for result in evaluation_results:
-            writer.writerow(
-                [
-                    "",
-                    result["input_text"],
-                    result["generated_question"],
-                    result["reference_question"],
-                    result["bleu"],
-                    result["meteor"],
-                    result["rouge_l"],
-                ]
-            )
-
-
-def main():
-    # 加载数据
-    data_path = "./data/NLPCC/test_converted.json"
-    test_data = load_data(data_path)
-    # 保存结果
-    output_path = "output/eval/internlm2_5_nlpcc.csv"
-
-    avg_bleu, avg_meteor, avg_rouge_l, evaluation_results = evaluate(
-        generate_chain, test_data
-    )
-    # 保存评估结果
-    save_results(
-        output_path,
-        'internlm2_5',
-        avg_bleu,
-        avg_meteor,
-        avg_rouge_l,
-        evaluation_results,
-    )
-
-    # 打印结果保存信息
-    logger.info(f"结果已保存到 {output_path}")
-def test():
-    input_text="[['不伦瑞克（德国中北部城市）', '著名高校', '布伦瑞克工业大学']]"
-    input_question="你知道不伦瑞克有哪些著名高校吗"
-    rewrite = generate_chain.invoke({"schema": input_text,"question": input_question}).rewrite
-    print(rewrite)
-    from bert_score import score
-    refs = [input_question,rewrite]
-    cands = ['不伦瑞克的著名的大学有哪些','不伦瑞克的著名的大学有哪些']
-    P, R, F1 = score(cands, refs, lang="zh", verbose=True)
-    print(P, R, F1)  # 生成 F1 评分，避免因为句式不同而评分过低
-    
 if __name__ == "__main__":
-    # main()
-    test()
+    # 读取 CSV 文件，并将第一列作为索引
+    df = pd.read_csv("output/eval/test.csv", index_col=0)
+    df.reset_index(drop=True, inplace=True)
+    df.index += 1  # 将索引从1开始编号
+    df_filtered = df[['输入文本', '生成问题']]
+    # 打印结果
+    print(df_filtered.head())
+
+    # data_path = "./data/NLPCC/test_converted.json"
+    # test_data = load_data(data_path)
+    updated_df = generate_questions(df)
+    # 保存到原始文件，添加新列 "改写问题"
+    updated_df.to_csv("output/eval/bart_KEGLUE_BERTSCORE_with_rewritten.csv", index=False)
+
+    # 打印生成的 DataFrame
+    print(updated_df.head())
