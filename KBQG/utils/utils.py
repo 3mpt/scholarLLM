@@ -1,6 +1,6 @@
 from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.meteor_score import meteor_score
-from rouge import Rouge
+from utils.rouge import Rouge
 
 
 def calculate_metrics(reference, candidate):

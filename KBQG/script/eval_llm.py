@@ -1,6 +1,8 @@
-from model.triple2question import Triple2QuestionModel
-from model.randeng_T5 import RandengT5
-from model.bart import Bart
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
+import csv
+import logging
 import torch
 import json
 from utils import calculate_metrics
@@ -11,13 +13,49 @@ import logging
 import argparse
 import os
 import re
-
 # 设置日志记录
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# API 配置
+api_base_url = "http://127.0.0.1:8000/v1/"
+model = "models/internlm2_5-7b-chat"
+api_key = "my_key"
+
+# 初始化语言模型
+llm = ChatOpenAI(
+    model_name=model,  # 使用你的模型
+    temperature=0,  # 设置温度等其他参数
+    openai_api_base=api_base_url,  # 传递 api_base_url
+    openai_api_key=api_key,  # 传递 api_key
+)
+
+# 生成问题系统的提示模板
+generate_system = """
+你将接收到一个或多个三元组结构的数据，每个其中包括三部分：主体、关系、客体。
+请根据以下三元组生成一个相关的问题语句。
+要求：
+1. 生成的问题尽可能简短
+2. 要基于给定的知识
+3. 客体为问题的答案，由主体和关系生成出问题
+例如: {{'schema':[['宣肺化痰', '治疗', '外感风寒，痰涎壅肺']],'question':'我想知道宣肺化痰可以治疗什么'}}
+    {{'schema': [["顾菁菁","登场作品","一仆二主"], [ "一仆二主", "出品公司","新丽传媒股份有限公司"]],"question":"请问顾菁菁的登场作品是哪个公司出品的？"}}
+这是数据
+{schema}
+"""
+
+# 生成问题的提示模板
+generate_prompt = ChatPromptTemplate(
+    messages=[HumanMessagePromptTemplate.from_template(generate_system)],
+    input_variables=["schema"],
+)
+
+# 生成问题的输出模型
+class GenerateOutput(BaseModel): 
+    question: str = Field(..., description="基于给定的三元组生成问题")
+
+# 生成问题的链
+generate_chain = generate_prompt | llm.with_structured_output(GenerateOutput)
 
 def load_data(file_path):
     """
@@ -25,17 +63,6 @@ def load_data(file_path):
     """
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def load_model(model_path, device):
-    """
-    加载模型。
-    """
-    model = Bart(device=device)
-    # model = RandengT5(device=device)
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
-    return model
 
 def clean_text(text):
     """
@@ -45,7 +72,7 @@ def clean_text(text):
     cleaned_text = re.sub(r'[^\w\s]', '', text).replace(" ", "")
     return cleaned_text
 
-def evaluate(model, test_data, device):
+def evaluate(model, test_data):
     """
     评估模型。
     """
@@ -56,15 +83,10 @@ def evaluate(model, test_data, device):
 
     for entry in tqdm(test_data, desc="评估进度"):
         # 构建输入文本
-        path = entry["path"]
-        input_text_parts = []
-        for subject, predicate, obj in path:
-            input_text_parts.append(f"['{subject}', '{predicate}', '{obj}']")
-        input_text = f"generate question: [{', '.join(input_text_parts)}]"
+        input_text = entry["path"]
         reference_question = entry["q"]
-
         logger.info(f"评估输入文本: {input_text}")
-        question = model.generate(input_text)
+        question = model.invoke({"schema": input_text}).question
         if question:
             logger.info(f"生成的问题: {question}")
             # 去除标点符号
@@ -106,7 +128,6 @@ def evaluate(model, test_data, device):
 
     return avg_bleu, avg_meteor, avg_rouge_l, evaluation_results
 
-
 def save_results(
     output_file,
     model_name,
@@ -132,7 +153,7 @@ def save_results(
 
         # 写入每个样本的详细评估结果
         writer.writerow(
-            ["", "输入文本", "生成问题", "参考问题", "BLEU", "METEOR", "ROUGE-L"]
+            ["输入文本", "生成问题", "参考问题", "BLEU", "METEOR", "ROUGE-L"]
         )
         for result in evaluation_results:
             writer.writerow(
@@ -149,61 +170,27 @@ def save_results(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="评估模型性能")
-    parser.add_argument(
-        "--test_data",
-        type=str,
-        default="./data/KGCLUE/test_converted.json",
-        help="测试数据文件路径",
+    # 加载数据
+    data_path = "./data/NLPCC/test_converted.json"
+    test_data = load_data(data_path)
+    # 保存结果
+    output_path = "output/eval/internlm2_5_nlpcc.csv"
+
+    avg_bleu, avg_meteor, avg_rouge_l, evaluation_results = evaluate(
+        generate_chain, test_data
     )
-    parser.add_argument(
-        "--model_path",
-        type=str,
-        default="output/bart_02_03_18_14.pth",
-        help="模型文件路径",
+    # 保存评估结果
+    save_results(
+        output_path,
+        'internlm2_5',
+        avg_bleu,
+        avg_meteor,
+        avg_rouge_l,
+        evaluation_results,
     )
-    parser.add_argument(
-        "--output_file", type=str, default="output/eval/bart_02_03_18_14.csv", help="输出文件路径"
-    )
-    parser.add_argument(
-        "--model_name", type=str, default="bart_02_03_18_14", help="模型名字"
-    )
-    parser.add_argument("--append", action="store_true", help="是否追加结果到现有文件")
-    args = parser.parse_args()
 
-    # 指定设备（CPU 或 GPU）
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    try:
-        # 加载数据
-        test_data = load_data(args.test_data)
-
-        # 加载模型
-        model = load_model(args.model_path, device)
-
-        # 评估模型
-        avg_bleu, avg_meteor, avg_rouge_l, evaluation_results = evaluate(
-            model, test_data, device
-        )
-
-        # 保存评估结果
-        save_results(
-            args.output_file,
-            args.model_name,
-            avg_bleu,
-            avg_meteor,
-            avg_rouge_l,
-            evaluation_results,
-            args.append,
-        )
-
-        logger.info(f"评估结果已保存到: {args.output_file}")
-
-    except FileNotFoundError:
-        logger.error("文件未找到，请检查路径是否正确。")
-    except Exception as e:
-        logger.error(f"发生错误: {e}")
-
+    # 打印结果保存信息
+    logger.info(f"结果已保存到 {output_path}")
 
 if __name__ == "__main__":
     main()

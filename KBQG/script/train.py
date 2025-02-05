@@ -93,7 +93,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
             best_val_loss = val_loss
             best_epoch = epoch + 1
             current_time = datetime.now().strftime("%m_%d_%H_%M")
-            model_save_path = f"output/bart_{current_time}.pth"
+            model_save_path = f"../output/model/bart_{current_time}.pth"
             torch.save(model.state_dict(), model_save_path)
             print(f"Best model saved at epoch {epoch + 1} with Val Loss: {val_loss}")
 
