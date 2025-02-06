@@ -103,19 +103,19 @@ def main():
     parser.add_argument(
         "--eval_data",
         type=str,
-        default="../output/generation/keglue/bart_rewrite.csv",
+        default="../output/generation/nlpcc/bart_rewrite1.csv",
         help="评估数据文件路径",
     )
     parser.add_argument(
         "--output_file", 
         type=str, 
-        default="../output/eval/keglue/bart_llm.csv",
+        default="../output/eval/nlpcc/bart_llm1.csv",
          help="输出文件路径"
     )
     parser.add_argument(
         "--summary_file",
         type=str,
-        default="../output/eval/keglue/summary.csv", 
+        default="../output/eval/nlpcc/summary1.csv", 
         help="总分文件"
     )
     args = parser.parse_args()
@@ -123,6 +123,7 @@ def main():
     try:
         # 加载数据
         df = pd.read_csv(args.eval_data)
+        
         ques = df["生成问题"].tolist()  # 生成问题
         refs = df["参考问题"].tolist()  # 参考问题（标注答案）
         rewrites = df["改写问题"].tolist()  # 改写问题
@@ -139,8 +140,11 @@ def main():
         if individual_results:
             # 每行的评估结果写入文件
             df_results = pd.DataFrame(individual_results)
+            df_results["输入文本"] = df["输入文本"]
             df_results["生成问题BERTScore"] = ques_F1_list
             df_results["改写问题BERTScore"] = rewrites_F1_list
+            columns_order = ["输入文本"] + [col for col in df_results.columns if col not in ["输入文本"]]
+            df_results = df_results[columns_order]
             df_results.to_csv(args.output_file, index=False)
             logger.info(f"评估结果已保存到 {args.output_file}")
 

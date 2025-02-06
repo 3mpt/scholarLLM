@@ -1,3 +1,11 @@
+import sys
+import os
+
+# 获取 `KBQG` 目录的路径
+KBQG_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 把 `KBQG` 目录添加到 Python 搜索路径
+sys.path.append(KBQG_PATH)
 import json
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -6,7 +14,6 @@ from tqdm import tqdm
 from model.triple2question import Triple2QuestionModel
 from model.randeng_T5 import RandengT5
 from model.bart import Bart
-import os
 from datetime import datetime
 
 # 设置代理
@@ -107,8 +114,8 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained("fnlp/bart-base-chinese", legacy=False)
 
     # 加载数据
-    train_dataset = TripleDataset("./data/KGCLUE/train_converted.json", tokenizer)
-    val_dataset = TripleDataset("./data/KGCLUE/val_converted.json", tokenizer)
+    train_dataset = TripleDataset("../data/ALL/train.json", tokenizer)
+    val_dataset = TripleDataset("../data/ALL/val.json", tokenizer)
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=8, shuffle=False)
 
@@ -118,7 +125,7 @@ if __name__ == "__main__":
     # model = RandengT5().to(device)
     model = Bart().to(device)
     # 加载最佳模型
-    model.load_state_dict(torch.load("output/bart_NLPCC_02_03_17_15.pth"))
+    # model.load_state_dict(torch.load("output/bart_NLPCC_02_03_17_15.pth"))
     # 定义优化器
     optimizer = AdamW(model.parameters(), lr=1e-5)
 

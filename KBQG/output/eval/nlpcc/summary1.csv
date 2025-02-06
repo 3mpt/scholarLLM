@@ -1,0 +1,2 @@
+ques_bleu,ques_meteor,ques_rouge_l,ques_BERTScore,rewrites_bleu,rewrites_meteor,rewrites_rouge_l,rewrites_BERTScore
+0.8663533978822094,0.9449448125513439,0.9192498318210096,tensor(0.9721),0.41806865233703344,0.6807349770705621,0.7062889029330034,tensor(0.8588)
