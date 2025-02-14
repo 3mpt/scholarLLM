@@ -34,6 +34,9 @@
 2025/01/03 测试了使用 lmdeploy 进行部署，但是支持的工具形式不同 部分大佬有相同问题<https://github.com/InternLM/lmdeploy/issues/3058#issuecomment-2606852164> 所以决定用vllm进行部署。
 
 2025/02/03 开了第二个任务KBQG 新增了一个文件夹，主要用于生成问答数据集。
+## 模型下载
+`apt install git-lfs`
+
 
 ## 运行
 
@@ -46,8 +49,23 @@
     --tool-call-parser internlm \
     --chat-template examples/tool_chat_template_internlm2_tool.jinja`
 
+
 `python -m vllm.entrypoints.openai.api_server \
-    --model model/internlm2_5-20b-chat \
+    --model models/Qwen2.5-7B-Instruct \
+    --trust-remote-code \
+    --enable-auto-tool-choice \
+    --tool-call-parser internlm \
+    --chat-template examples/tool_chat_template_internlm2_tool.jinja`
+
+`python -m vllm.entrypoints.openai.api_server \
+    --model models/DeepSeek-R1-Distill-Qwen-7B \
+    --trust-remote-code \
+    --enable-auto-tool-choice \
+    --tool-call-parser internlm \
+    --chat-template examples/tool_chat_template_internlm2_tool.jinja`
+
+`python -m vllm.entrypoints.openai.api_server \
+    --model models/Llama-3.2-1B-Instruct \
     --trust-remote-code \
     --enable-auto-tool-choice \
     --tool-call-parser internlm \

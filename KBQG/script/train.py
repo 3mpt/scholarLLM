@@ -61,6 +61,8 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
     start_time = datetime.now()
     best_val_loss = float('inf')
     best_epoch = 0
+    best_model_path = None  # 记录当前最优模型路径
+
     model.train()
     for epoch in range(epochs):
         epoch_loss = 0
@@ -80,7 +82,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
 
             epoch_loss += loss.item()
 
-         # 验证集评估
+        # 进入验证模式
         model.eval()
         val_loss = 0
         with torch.no_grad():
@@ -95,13 +97,23 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
 
         print(f"Epoch {epoch + 1} Loss: {epoch_loss / len(dataloader)} Val Loss: {val_loss / len(val_dataloader)}")
 
-        # 更新最佳模型
+        # 只保留最优模型
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_epoch = epoch + 1
+
+            # 生成新模型的路径
             current_time = datetime.now().strftime("%m_%d_%H_%M")
-            model_save_path = f"../output/model/bart_{current_time}.pth"
+            model_save_path = f"../output/model/best_t5.pth"
+
+            # 如果之前保存了模型，则删除
+            if best_model_path and os.path.exists(best_model_path):
+                os.remove(best_model_path)
+                print(f"Removed previous best model: {best_model_path}")
+
+            # 保存新模型
             torch.save(model.state_dict(), model_save_path)
+            best_model_path = model_save_path
             print(f"Best model saved at epoch {epoch + 1} with Val Loss: {val_loss}")
 
     end_time = datetime.now()
@@ -111,7 +123,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
 # 主函数
 if __name__ == "__main__":
     # 初始化分词器并设置 legacy=False
-    tokenizer = AutoTokenizer.from_pretrained("fnlp/bart-base-chinese", legacy=False)
+    tokenizer = AutoTokenizer.from_pretrained("IDEA-CCNL/Randeng-T5-784M-MultiTask-Chinese", legacy=False)
 
     # 加载数据
     train_dataset = TripleDataset("../data/ALL/train.json", tokenizer)
@@ -122,8 +134,8 @@ if __name__ == "__main__":
     # 加载模型并确保其在正确的设备上
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = Triple2QuestionModel().to(device)
-    # model = RandengT5().to(device)
-    model = Bart().to(device)
+    model = RandengT5().to(device)
+    # model = Bart().to(device)
     # 加载最佳模型
     # model.load_state_dict(torch.load("output/bart_NLPCC_02_03_17_15.pth"))
     # 定义优化器

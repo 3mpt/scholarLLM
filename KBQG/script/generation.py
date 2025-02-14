@@ -65,31 +65,30 @@ def generate(model, test_data, rewriter):
     generated_data = []
 
     # 提取问题和路径
-    questions_list = [item["q"] for item in test_data]
+    # questions_list = [item["q"] for item in test_data]
     paths_list = [", ".join([str(triple) for triple in item["path"]]) for item in test_data]
-    print(questions_list, paths_list)
-    # 计算 P, R, F1
-    P, R, F1 = score(questions_list, paths_list, lang="zh", verbose=True)
+    # print(questions_list, paths_list)
+    # # 计算 P, R, F1
+    # P, R, F1 = score(questions_list, paths_list, lang="zh", verbose=True)
 
-    for entry, f1_score in zip(tqdm(test_data, desc="生成进度"), F1.tolist()):  
-        print(f1_score)
+    for entry in tqdm(test_data, desc="生成进度"):
         path = entry["path"]
         path_str = ", ".join([str(triple) for triple in path])
         input_text = f"generate question: [{path_str}]"
-        reference_question = entry["q"]
+        # reference_question = entry["q"]
 
         question = model.generate(input_text)
         
         if question:
             # 判断模型生成的数据是否满足阈值
-            rewritten_question = question if f1_score > 0.8 else rewriter.rewrite_question(path, question)
-
+            # rewritten_question = question if f1_score > 0.8 else rewriter.rewrite_question(path, question)
+            rewritten_question = rewriter.rewrite_question(path, question)
             generated_data.append({
                 "输入文本": path,
                 "生成问题": question,
-                "参考问题": reference_question,
+                # "参考问题": reference_question,
                 "改写问题": rewritten_question,
-                "F1": f1_score
+                # "F1": f1_score
             })
         else:
             logger.warning("生成失败")
@@ -101,17 +100,17 @@ def main():
     parser.add_argument(
         "--test_data",
         type=str,
-        default="../data/ALL/test.json",
+        default="../data/COAL/test.json",
         help="测试数据文件路径",
     )
     parser.add_argument(
         "--model_path",
         type=str,
-        default="../output/model/bart_02_06_18_23.pth",
+        default="../output/model/best_BART.pth",
         help="模型文件路径",
     )
     parser.add_argument(
-        "--output_file", type=str, default="../output/generation/ALL/bart_18_23.csv", help="输出文件路径"
+        "--output_file", type=str, default="../output/generation/ALL/COAL_BART.csv", help="输出文件路径"
     )
     parser.add_argument(
         "--model_name", type=str, default="fnlp/bart-base-chinese", help="模型名字"
