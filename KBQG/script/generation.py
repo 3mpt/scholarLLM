@@ -71,10 +71,10 @@ def generate(model, test_data, rewriter):
     # # 计算 P, R, F1
     # P, R, F1 = score(questions_list, paths_list, lang="zh", verbose=True)
 
-    for entry in tqdm(test_data, desc="生成进度"):
-        path = entry["path"]
+    for item in tqdm(test_data, desc="生成进度"):
+        path = item["path"]
         path_str = ", ".join([str(triple) for triple in path])
-        input_text = f"generate question: [{path_str}]"
+        input_text = f"给定知识：{item['path']}，问题的答案是：{item['answer']}，请生成问题"
         # reference_question = entry["q"]
 
         question = model.generate(input_text)
@@ -82,12 +82,12 @@ def generate(model, test_data, rewriter):
         if question:
             # 判断模型生成的数据是否满足阈值
             # rewritten_question = question if f1_score > 0.8 else rewriter.rewrite_question(path, question)
-            rewritten_question = rewriter.rewrite_question(path, question)
+            # rewritten_question = rewriter.rewrite_question(path, question)
             generated_data.append({
                 "输入文本": path,
                 "生成问题": question,
                 # "参考问题": reference_question,
-                "改写问题": rewritten_question,
+                # "改写问题": rewritten_question,
                 # "F1": f1_score
             })
         else:
@@ -100,17 +100,17 @@ def main():
     parser.add_argument(
         "--test_data",
         type=str,
-        default="../data/COAL/test.json",
+        default="../data/demo/test_20.json",
         help="测试数据文件路径",
     )
     parser.add_argument(
         "--model_path",
         type=str,
-        default="../output/model/best_BART.pth",
+        default="../output/model/bart_ans.pth",
         help="模型文件路径",
     )
     parser.add_argument(
-        "--output_file", type=str, default="../output/generation/ALL/COAL_BART.csv", help="输出文件路径"
+        "--output_file", type=str, default="../output/generation/bart_01.csv", help="输出文件路径"
     )
     parser.add_argument(
         "--model_name", type=str, default="fnlp/bart-base-chinese", help="模型名字"
@@ -137,8 +137,8 @@ def main():
         generate_result.to_csv(args.output_file, index=False, encoding="utf-8")
         logger.info(f"生成结果已保存到: {args.output_file}")
 
-    except FileNotFoundError:
-        logger.error("文件未找到，请检查路径是否正确。")
+    except FileNotFoundError as e:
+        logger.error(f"文件未找到，请检查路径是否正确。{e}")
     except Exception as e:
         logger.error(f"发生错误: {e}")
 

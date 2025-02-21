@@ -32,7 +32,7 @@ class TripleDataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        input_text = f"generate question: {item['path']}"
+        input_text = f"给定知识：{item['path']}，问题的答案是：{item['answer']}，请生成问题"
         target_text = item["q"]
 
         input_encoding = self.tokenizer(
@@ -104,7 +104,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
 
             # 生成新模型的路径
             current_time = datetime.now().strftime("%m_%d_%H_%M")
-            model_save_path = f"../output/model/best_t5.pth"
+            model_save_path = f"../output/model/bart_ans.pth"
 
             # 如果之前保存了模型，则删除
             if best_model_path and os.path.exists(best_model_path):
@@ -123,7 +123,7 @@ def train(model, dataloader, val_dataloader, optimizer, device, epochs=5):
 # 主函数
 if __name__ == "__main__":
     # 初始化分词器并设置 legacy=False
-    tokenizer = AutoTokenizer.from_pretrained("IDEA-CCNL/Randeng-T5-784M-MultiTask-Chinese", legacy=False)
+    tokenizer = AutoTokenizer.from_pretrained("fnlp/bart-base-chinese", legacy=False)
 
     # 加载数据
     train_dataset = TripleDataset("../data/ALL/train.json", tokenizer)
@@ -134,18 +134,10 @@ if __name__ == "__main__":
     # 加载模型并确保其在正确的设备上
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model = Triple2QuestionModel().to(device)
-    model = RandengT5().to(device)
-    # model = Bart().to(device)
-    # 加载最佳模型
-    # model.load_state_dict(torch.load("output/bart_NLPCC_02_03_17_15.pth"))
+    # model = RandengT5().to(device)
+    model = Bart().to(device)
     # 定义优化器
     optimizer = AdamW(model.parameters(), lr=1e-5)
 
     # 训练模型
-    train(model, train_dataloader, val_dataloader, optimizer, device, epochs=10)
-
-    # # 保存模型
-    # current_time = datetime.now().strftime("%m_%d_%H_%M")
-    # model_save_path = f"bart_NLPCC_{current_time}.pth"
-    # torch.save(model.state_dict(), model_save_path)
-    # print(f"Model saved to {model_save_path}")
+    train(model, train_dataloader, val_dataloader, optimizer, device, epochs=5)

@@ -60,9 +60,7 @@
 `python -m vllm.entrypoints.openai.api_server \
     --model models/DeepSeek-R1-Distill-Qwen-7B \
     --trust-remote-code \
-    --enable-auto-tool-choice \
-    --tool-call-parser internlm \
-    --chat-template examples/tool_chat_template_internlm2_tool.jinja`
+`
 
 `python -m vllm.entrypoints.openai.api_server \
     --model models/Llama-3.2-1B-Instruct \
